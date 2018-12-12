@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+bindbc-libsoundio.so
+bindbc-libsoundio.dylib
+bindbc-libsoundio.dll
+bindbc-libsoundio.a
+bindbc-libsoundio.lib
+bindbc-libsoundio-test-*
+*.exe
+*.o
+*.obj
+*.lst
+*.lib

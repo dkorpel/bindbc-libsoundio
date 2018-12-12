@@ -1,0 +1,6 @@
+name "libsoundio-example"
+description "An example of using libsoundio"
+authors "dkorpel"
+copyright "Copyright © 2019, dkorpel"
+license "MIT"
+dependency "bindbc-libsoundio" path="../"
