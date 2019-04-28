@@ -9,10 +9,14 @@ import bindbc.loader;
 import bindbc.libsoundio.types;
 
 extern(C) @nogc nothrow {
-	alias psoundio_version_string = const(char)* function();
-	alias psoundio_version_major = int function();
-	alias psoundio_version_minor = int function();
-	alias psoundio_version_patch = int function();
+
+	static if (libsoundioSupport >= LibsoundioSupport.libsoundio11) {
+		alias psoundio_version_string = const(char)* function();
+		alias psoundio_version_major = int function();
+		alias psoundio_version_minor = int function();
+		alias psoundio_version_patch = int function();
+	}
+
 	alias psoundio_create = SoundIo* function();
 	alias psoundio_destroy = void function(SoundIo* soundio);
 	alias psoundio_connect = int function(SoundIo* soundio);
@@ -62,6 +66,11 @@ extern(C) @nogc nothrow {
 	alias psoundio_outstream_clear_buffer = int function(SoundIoOutStream* outstream);
 	alias psoundio_outstream_pause = int function(SoundIoOutStream* outstream, bool pause);
 	alias psoundio_outstream_get_latency = int function(SoundIoOutStream* outstream, double* out_latency);
+
+	static if (libsoundioSupport >= LibsoundioSupport.libsoundio20) {
+		alias psoundio_outstream_set_volume = int function(SoundIoOutStream* outstream, double volume);
+	}
+
 	alias psoundio_instream_create = SoundIoInStream* function(SoundIoDevice* device);
 	alias psoundio_instream_destroy = void function(SoundIoInStream* instream);
 	alias psoundio_instream_open = int function(SoundIoInStream* instream);
@@ -83,10 +92,12 @@ extern(C) @nogc nothrow {
 }
 
 __gshared {
-	psoundio_version_string soundio_version_string;
-	psoundio_version_major soundio_version_major;
-	psoundio_version_minor soundio_version_minor;
-	psoundio_version_patch soundio_version_patch;
+	static if (libsoundioSupport >= LibsoundioSupport.libsoundio11) {
+		psoundio_version_string soundio_version_string;
+		psoundio_version_major soundio_version_major;
+		psoundio_version_minor soundio_version_minor;
+		psoundio_version_patch soundio_version_patch;
+	}
 	psoundio_create soundio_create;
 	psoundio_destroy soundio_destroy;
 	psoundio_connect soundio_connect;
@@ -136,6 +147,11 @@ __gshared {
 	psoundio_outstream_clear_buffer soundio_outstream_clear_buffer;
 	psoundio_outstream_pause soundio_outstream_pause;
 	psoundio_outstream_get_latency soundio_outstream_get_latency;
+
+	static if (libsoundioSupport >= LibsoundioSupport.libsoundio20) {
+		psoundio_outstream_set_volume soundio_outstream_set_volume;
+	}
+
 	psoundio_instream_create soundio_instream_create;
 	psoundio_instream_destroy soundio_instream_destroy;
 	psoundio_instream_open soundio_instream_open;
@@ -157,7 +173,15 @@ __gshared {
 }
 
 private SharedLib lib;
+private LibsoundioSupport loadedVersion;
 
+/**
+ * Unloads the shared libsoundio library.
+ * If no libsoundio shared library was succesfully loaded, it does nothing.
+ * This is not required to do at program exit, but if you want to prematurely
+ * free memory or reload a new version this function is of use.
+ * After unloading, no libsoundio functions may be called before succesfully calling loadLibsoundio again.
+ */
 void unloadLibsoundio()
 {
 	if(lib != invalidHandle) {
@@ -165,24 +189,70 @@ void unloadLibsoundio()
 	}
 }
 
-enum LoadStatus {
-	success,
-	noLibrary,
-	badLibrary,
+/**
+ * Load a libsoundio dynamic library by automatically trying common names
+ * for the library. If you want to specify which dynamic library should be 
+ * loaded, refer to the overload that takes a libName parameter.
+ */
+LibsoundioSupport loadLibsoundio()
+{
+	version(Windows) {
+		const(char)[][1] libNames = ["libsoundio.dll"];
+	} else version(OSX) {
+		const(char)[][1] libNames = ["libsoundio.dylib"]; //todo: verify this
+	} else version(Posix) {
+
+		static if (libsoundioSupport >= LibsoundioSupport.libsoundio20) {
+			const(char)[][6] libNames = [
+			"libsoundio.so",
+			"/usr/local/lib/libsoundio.so",
+			"libsoundio.so.2",
+			"/usr/local/lib/libsoundio.so.2",
+			"libsoundio.so.2.0.0",
+			"/usr/local/lib/libsoundio.so.2.0.0",
+			];
+		} else {
+			const(char)[][6] libNames = [
+			"libsoundio.so",
+			"/usr/local/lib/libsoundio.so",
+			"libsoundio.so.1",
+			"/usr/local/lib/libsoundio.so.1",
+			"libsoundio.so.1.1.0",
+			"/usr/local/lib/libsoundio.so.1.1.0",
+			"libsoundio.so.1.0.3",
+			"/usr/local/lib/libsoundio.so.1.0.3",
+			"libsoundio.so.1.0.2",
+			"/usr/local/lib/libsoundio.so.1.0.2",
+			"libsoundio.so.1.0.1",
+			"/usr/local/lib/libsoundio.so.1.0.1",
+			"libsoundio.so.1.0.0",
+			"/usr/local/lib/libsoundio.so.1.0.0",
+			];
+		}
+	}
+
+	LibsoundioSupport ret;
+    foreach(name; libNames) {
+        ret = loadLibsoundio(name.ptr);
+        if(ret != LibsoundioSupport.noLibrary) break;
+    }
+	return ret;
 }
 
-LoadStatus loadLibsoundio(const(char)* libName)
+/**
+ * Load a specific libsoundio dynamic library from a file path.
+ * params
+ * 	libName: a zero-terminated string denoting the file path to the shared library file to load.
+ */
+LibsoundioSupport loadLibsoundio(const(char)* libName)
 {
 	lib = load(libName);
 	if(lib == invalidHandle) {
-		return LoadStatus.noLibrary; 
+		return LibsoundioSupport.noLibrary; 
 	}
 	
-	auto errCount = errorCount();
-	lib.bindSymbol(cast(void**)&soundio_version_string,"soundio_version_string");
-	lib.bindSymbol(cast(void**)&soundio_version_major,"soundio_version_major");
-	lib.bindSymbol(cast(void**)&soundio_version_minor,"soundio_version_minor");
-	lib.bindSymbol(cast(void**)&soundio_version_patch,"soundio_version_patch");
+	const errCount = errorCount();
+
 	lib.bindSymbol(cast(void**)&soundio_create,"soundio_create");
 	lib.bindSymbol(cast(void**)&soundio_destroy,"soundio_destroy");
 	lib.bindSymbol(cast(void**)&soundio_connect,"soundio_connect");
@@ -232,6 +302,7 @@ LoadStatus loadLibsoundio(const(char)* libName)
 	lib.bindSymbol(cast(void**)&soundio_outstream_clear_buffer,"soundio_outstream_clear_buffer");
 	lib.bindSymbol(cast(void**)&soundio_outstream_pause,"soundio_outstream_pause");
 	lib.bindSymbol(cast(void**)&soundio_outstream_get_latency,"soundio_outstream_get_latency");
+
 	lib.bindSymbol(cast(void**)&soundio_instream_create,"soundio_instream_create");
 	lib.bindSymbol(cast(void**)&soundio_instream_destroy,"soundio_instream_destroy");
 	lib.bindSymbol(cast(void**)&soundio_instream_open,"soundio_instream_open");
@@ -251,7 +322,24 @@ LoadStatus loadLibsoundio(const(char)* libName)
 	lib.bindSymbol(cast(void**)&soundio_ring_buffer_free_count,"soundio_ring_buffer_free_count");
 	lib.bindSymbol(cast(void**)&soundio_ring_buffer_clear,"soundio_ring_buffer_clear");
 	
-	if (errorCount() != errCount) return LoadStatus.badLibrary;
+	loadedVersion = libsoundioSupport.libsoundio10;
 	
-	return LoadStatus.success;
+	static if (libsoundioSupport >= LibsoundioSupport.libsoundio11) {
+		lib.bindSymbol(cast(void**)&soundio_version_string,"soundio_version_string");
+		lib.bindSymbol(cast(void**)&soundio_version_major,"soundio_version_major");
+		lib.bindSymbol(cast(void**)&soundio_version_minor,"soundio_version_minor");
+		lib.bindSymbol(cast(void**)&soundio_version_patch,"soundio_version_patch");
+		
+		loadedVersion = libsoundioSupport.libsoundio11;
+	}
+
+	static if (libsoundioSupport >= LibsoundioSupport.libsoundio20) {
+		lib.bindSymbol(cast(void**)&soundio_outstream_set_volume,"soundio_outstream_set_volume");
+		
+		loadedVersion = libsoundioSupport.libsoundio20;
+	}
+
+	if (errorCount() != errCount) return LibsoundioSupport.badLibrary;
+	
+	return loadedVersion;
 }

@@ -7,6 +7,7 @@ If you only want static bindings, check out WebFreak's [dsoundio](https://github
 ## Warning: this readme is work in progress
 
 ## Usage
+### Windows
 Get a [release](http://libsound.io/#releases) for libsoundio.
 Add this package to your project. Ensure the right shared library are in the same folder as your executible.
 Here is an example for Windows, where you extracted the dlls to the lib folder and renamed them:
@@ -29,6 +30,27 @@ copyFiles "libs/libsoundio-x64.dll" platform="windows-x86_64"
 ```
 
 This assumes you put the libraries in a lib folder and renamed them to include -x86 or -64. 
+
+### Linux
+On Linux, you need to build libsoundio yourself. Assuming a standard Ubuntu/Debian installation, this should work:
+```
+sudo apt-get install libpulse-dev cmake
+git clone https://github.com/andrewrk/libsoundio
+cd libsoundio
+mkdir build
+cd build
+cmake ..
+make
+sudo make install
+```
+For more detailed instructions, see: TODO
+Explanation:
+- First you need to install CMake because libsoundio uses that to generate makefiles / a Visual Studio Project / whatever C build set-up you want.
+- Then you clone libsoundio, and enter the directory, and make a build folder.
+- `make` will build the static and dynamic libraries, and also the examples.
+To do this, first you need to get development
+packages for an audio backend, or else only the 'Dummy' (silence) back-end will be available.
+
 Example code can be found below. 
 
 ```D

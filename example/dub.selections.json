@@ -1,0 +1,7 @@
+{
+	"fileVersion": 1,
+	"versions": {
+		"bindbc-libsoundio": {"path":"../"},
+		"bindbc-loader": "0.1.1"
+	}
+}

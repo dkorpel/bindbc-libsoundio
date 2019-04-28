@@ -11,7 +11,7 @@ else public import bindbc.libsoundio.binddynamic;
 /// A frame is one sample per channel.
 pragma(inline, true) int soundio_get_bytes_per_frame(SoundIoFormat format, int channel_count) {
 	return soundio_get_bytes_per_sample(format) * channel_count;
-};
+}
 
 /// Sample rate is the number of frames per second.
 pragma(inline, true) int soundio_get_bytes_per_second(SoundIoFormat format, int channel_count, int sample_rate) {

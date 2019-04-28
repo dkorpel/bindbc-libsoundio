@@ -1,9 +1,10 @@
 import bindbc.libsoundio;
 import core.thread: Thread;
 
-import std.stdio: writeln;
+import std.stdio: writeln, writefln;
 import std.exception: enforce;
 import std.math: fmod, sin, PI;
+import std.string: fromStringz;
 
 enum sampleRate = 44100;
 enum A0freq = 440;
@@ -20,7 +21,8 @@ static this() {
 immutable(float[]) genSample(int hz, int sampleRate, float secs) {
 	import std.range, std.algorithm;
 	import std.exception: assumeUnique;
-	return iota(0, cast(int) (sampleRate * secs)).map!(x => customWave(cast(float) x * A0freq / sampleRate)).array.assumeUnique;
+	return iota(0, cast(int) (sampleRate * secs)).map!(
+		x => 0.25f * customWave(cast(float) x * A0freq / sampleRate)).array.assumeUnique;
 }
 
 float customWave(float phase) {
@@ -33,9 +35,9 @@ auto adsr(float peak, int attack) {
 	auto amplitude = chain(iota(0, peak, 0.01), iota(0.5, 0, 0), iota(0.5, 0, 0));
 }
 
-void main() {
-	//soundSample = genSample(A0freq, sampleRate, 2.0);
-	LoadStatus status;
+/// Initialise the dynamic bindings
+void loadDynamic() {
+	LibsoundioSupport status;
 	version(Windows) {
 		version(X86_64)
 			status = loadLibsoundio("libsoundio-x64.dll");
@@ -44,32 +46,38 @@ void main() {
 		else 
 			static assert(0, "unsupported Windows architecture");
 	} else {
-		status = loadLibsoundio(); // use default name
+		status = loadLibsoundio("libsoundio.so.2");
 	}
 	
-	if (status == LoadStatus.noLibrary) assert(0, "could not find libsoundio library");
-	if (status == LoadStatus.badLibrary) assert(0, "error when loading libsoundio symbols");
-	assert(status == LoadStatus.success);
-	
+	if (status == LibsoundioSupport.noLibrary) assert(0, "could not find libsoundio library");
+	if (status == LibsoundioSupport.badLibrary) assert(0, "error when loading libsoundio symbols");
+}
+
+void main() {
+	//soundSample = genSample(A0freq, sampleRate, 2.0);
+	loadDynamic();
+
 	auto audioThread = new Thread({
-		try {playSine();} catch (Exception e) {writeln("Audio error: ", e.msg);}
+		try {playSine();} catch (Exception e) {writeln("Audio error: ", e.msg); throw e;}
 	}).start();
 	
 	audioThread.join; // wait
 }
 
 void handleError(int err, lazy string prefix = "Soundio error: ") {
-	import std.string: fromStringz;
 	if (err > 0) throw new Exception(prefix ~ soundio_strerror(err).fromStringz.idup);
 }
 
 int playSine() {
-	import std.string: fromStringz;
+	SoundIoBackend backend = SoundIoBackend.SoundIoBackendNone;
+	backend = SoundIoBackend.SoundIoBackendDummy;
+	backend = SoundIoBackend.SoundIoBackendPulseAudio;
 	auto soundio = enforce(soundio_create(), "Out of memory for soundio");
 	scope (exit) soundio_destroy(soundio);
-	handleError(soundio_connect(soundio),  "Error connecting soundio: ");
+	handleError(soundio_connect_backend(soundio, backend),  "Error connecting soundio: ");
+	writeln("Backend: ", soundio_backend_name(soundio.current_backend).fromStringz.idup);
 	soundio_flush_events(soundio);
-	int default_out_device_index = soundio_default_output_device_index(soundio);
+	const default_out_device_index = soundio_default_output_device_index(soundio);
 	enforce(default_out_device_index >= 0, "No output device found");
 	auto device = enforce(soundio_get_output_device(
 		soundio, default_out_device_index), "Out of memory");
@@ -78,8 +86,15 @@ int playSine() {
 	auto outstream = soundio_outstream_create(device);
 	scope (exit) soundio_outstream_destroy(outstream);
 	outstream.format = SoundIoFormatFloat32NE;
+	assert(soundio_device_supports_format(device, SoundIoFormatFloat32NE));
 	outstream.write_callback = &write_callback;
+	writeln(outstream.layout_error);
 	handleError(soundio_outstream_open(outstream), "Unable to open device: ");
+	// outstream->layout = soundio_device_supports_layout(device, stereo) ? *stereo : device->layouts[0];
+	writeln(*outstream);
+	writeln(outstream.layout_error);
+	writefln("Software latency: %f\n", outstream.software_latency);
+	writeln(outstream.layout_error);
 	handleError(outstream.layout_error, "Unable to set channel layout: ");
 	handleError(soundio_outstream_start(outstream), "Unable to start device: ");
 	while (true) soundio_wait_events(soundio);
