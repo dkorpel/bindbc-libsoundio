@@ -15,9 +15,11 @@ static if (libsoundioSupport >= LibsoundioSupport.libsoundio11) {
 	int soundio_version_patch ();
 }
 
-/// Create a SoundIo context. You may create multiple instances of this to
+/// Create a SoundIo context.
+///
+/// You may create multiple instances of this to
 /// connect to multiple backends. Sets all fields to defaults.
-/// Returns `NULL` if and only if memory could not be allocated.
+/// Returns: `null` if and only if memory could not be allocated.
 /// See also ::soundio_destroy
 SoundIo* soundio_create ();
 void soundio_destroy (SoundIo* soundio);
@@ -113,15 +115,18 @@ bool soundio_channel_layout_equal (
     const(SoundIoChannelLayout)* a,
     const(SoundIoChannelLayout)* b);
 
-const(char)* soundio_get_channel_name (SoundIoChannelId id);
 /// Given UTF-8 encoded text which is the name of a channel such as
-/// "Front Left", "FL", or "front-left", return the corresponding
+/// "Front Left", "FL", or "front-left"
+const(char)* soundio_get_channel_name (SoundIoChannelId id);
+
+/// Returns: the corresponding
 /// SoundIoChannelId. Returns SoundIoChannelIdInvalid for no match.
 SoundIoChannelId soundio_parse_channel_id (const(char)* str, int str_len);
 
 /// Returns the number of builtin channel layouts.
-int soundio_channel_layout_builtin_count ();
-/// Returns a builtin channel layout. 0 <= `index` < ::soundio_channel_layout_builtin_count
+int soundio_channel_layout_builtin_count();
+
+/// Returns: a builtin channel layout. 0 <= `index` < ::soundio_channel_layout_builtin_count
 ///
 /// Although `index` is of type `int`, it should be a valid
 /// #SoundIoChannelLayoutId enum value.
@@ -130,13 +135,13 @@ const(SoundIoChannelLayout)* soundio_channel_layout_get_builtin (int index);
 /// Get the default builtin channel layout for the given number of channels.
 const(SoundIoChannelLayout)* soundio_channel_layout_get_default (int channel_count);
 
-/// Return the index of `channel` in `layout`, or `-1` if not found.
+/// Returns: the index of `channel` in `layout`, or `-1` if not found.
 int soundio_channel_layout_find_channel (
     const(SoundIoChannelLayout)* layout,
     SoundIoChannelId channel);
 
 /// Populates the name field of layout if it matches a builtin one.
-/// returns whether it found a match
+/// Returns: whether it found a match
 bool soundio_channel_layout_detect_builtin (SoundIoChannelLayout* layout);
 
 /// Iterates over preferred_layouts. Returns the first channel layout in
@@ -153,7 +158,7 @@ void soundio_sort_channel_layouts (SoundIoChannelLayout* layouts, int layout_cou
 
 // Sample Formats
 
-/// Returns -1 on invalid format.
+/// Returns: -1 on invalid format.
 int soundio_get_bytes_per_sample (SoundIoFormat format);
 
 /// A frame is one sample per channel.

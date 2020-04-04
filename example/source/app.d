@@ -6,14 +6,40 @@ import std.exception: enforce;
 import std.math: fmod, sin, PI;
 import std.string: fromStringz;
 
+// /dev/*midi*  = legacy
+// /dev/snd/... = alsa devices
+// aseqdump --list
+// aseqdump -=port=28:0
+// amidi --dump -p xxx
+//
+// libraries: asound pthread
+
+struct SoundContext
+{
+	@nogc: nothrow: pure: @safe: private:
+	enum maxSounds = 32;
+
+	PlayingSound[maxSounds] sounds;
+
+}
+
+struct PlayingSound
+{
+	// returns true if done
+	bool function(short[] toFill) sampleFunc;
+	void* params;
+	void* state;
+	long progress;
+}
+
 enum sampleRate = 44100;
 enum A0freq = 440;
 enum TAU = 2 * PI;
 
 // note: must be immutable, shared or __gshared or else it will be thread-local, which means the callback gets its own empty array
-immutable float[] soundSample; 
+immutable float[] soundSample;
 
-static this() {
+shared static this() {
 	// Not done at compile time since it currently gives an out of memory
 	soundSample = genSample(A0freq, sampleRate, 2.0);
 }
@@ -43,12 +69,12 @@ void loadDynamic() {
 			status = loadLibsoundio("libsoundio-x64.dll");
 		else version(X86)
 			status = loadLibsoundio("libsoundio-x86.dll");
-		else 
+		else
 			static assert(0, "unsupported Windows architecture");
 	} else {
 		status = loadLibsoundio("libsoundio.so.2");
 	}
-	
+
 	if (status == LibsoundioSupport.noLibrary) assert(0, "could not find libsoundio library");
 	if (status == LibsoundioSupport.badLibrary) assert(0, "error when loading libsoundio symbols");
 }
@@ -60,7 +86,7 @@ void main() {
 	auto audioThread = new Thread({
 		try {playSine();} catch (Exception e) {writeln("Audio error: ", e.msg); throw e;}
 	}).start();
-	
+
 	audioThread.join; // wait
 }
 
@@ -122,7 +148,7 @@ extern(C) static void write_callback(SoundIoOutStream* outstream, int frame_coun
 		float pitch = 440.0f;
 		float radians_per_second = pitch * 2.0f * PI;
 		for (int frame = 0; frame < frame_count; frame += 1) {
-			
+
 			float fac = cast(float) outstream.sample_rate / sampleRate;
 			int index = cast(int) ((seconds_offset + frame * seconds_per_frame) * sampleRate * fac);
 			//printf("%d %d\n", index, soundSample.length);

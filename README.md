@@ -1,7 +1,11 @@
 # bindbc-libsoundio
-Static and dynamic bindings for [libsoundio](http://libsound.io/), a low-level library for playing and recording sounds. You won't be simply calling `playSound()` or something, but instead find an input/output device and provide a callback writing samples to a buffer. For more high level audio functions, you might want to check out [SDL](http://code.dlang.org/packages/bindbc-sdl). If you want cross-platform access to the audio drivers and have total control, this library is a great fit. Comparisons with other audio libraries can be found on the [libsoundio wiki](https://github.com/andrewrk/libsoundio/wiki).
- 
-The bindings are `@nogc` and `nothrow` compatible and can be compiled for compatibility with `-betterC`. 
+Static and dynamic bindings for [libsoundio](http://libsound.io/), a low-level library for playing and recording sounds.
+You won't be simply calling `playSound()` or something, but instead find an input/output device and provide a callback writing samples to a buffer.
+For more high level audio functions, you might want to check out [SDL](http://code.dlang.org/packages/bindbc-sdl).
+If you want cross-platform access to the audio drivers and have total control, this library is a great fit.
+Comparisons with other audio libraries can be found on the [libsoundio wiki](https://github.com/andrewrk/libsoundio/wiki).
+
+The bindings are `@nogc` and `nothrow` compatible and can be compiled for compatibility with `-betterC`.
 If you only want static bindings, check out WebFreak's [dsoundio](https://github.com/WebFreak001/dsoundio).
 
 ## Warning: this readme is work in progress
@@ -18,18 +22,18 @@ __dub.json__
 }
 "copyFiles-windows-x64" ["libs/libsoundio-x64.dll"]
 "copyFiles-windows-x86_64" ["libs/libsoundio-x86.dll"]
-	
+
 }
 ```
 
 __dub.sdl__
 ```
 dependency "bindbc-libsoundio" version="~>0.1.0"
-copyFiles "libs/libsoundio-x86.dll" platform="windows-x86" 
+copyFiles "libs/libsoundio-x86.dll" platform="windows-x86"
 copyFiles "libs/libsoundio-x64.dll" platform="windows-x86_64"
 ```
 
-This assumes you put the libraries in a lib folder and renamed them to include -x86 or -64. 
+This assumes you put the libraries in a lib folder and renamed them to include -x86 or -64.
 
 ### Linux
 On Linux, you need to build libsoundio yourself. Assuming a standard Ubuntu/Debian installation, this should work:
@@ -51,7 +55,7 @@ Explanation:
 To do this, first you need to get development
 packages for an audio backend, or else only the 'Dummy' (silence) back-end will be available.
 
-Example code can be found below. 
+Example code can be found below.
 
 ```D
 import bindbc.libsoundio;
@@ -68,20 +72,20 @@ void main() {
 			status = loadLibsoundio("libsoundio-x64.dll");
 		else version(X86)
 			status = loadLibsoundio("libsoundio-x86.dll");
-		else 
+		else
 			static assert(0, "unsupported Windows architecture");
 	} else {
 		status = loadLibsoundio(); // use default name
 	}
-	
+
 	if (status == LoadStatus.noLibrary) assert(0, "could not find libsoundio library");
 	if (status == LoadStatus.badLibrary) assert(0, "error when loading libsoundio symbols");
 	assert(status == LoadStatus.success);
-	
+
 	auto audioThread = new Thread({
 		try {playSine();} catch (Exception e) {writeln("Audio error: ", e.msg);}
 	}).start();
-	
+
 	audioThread.join; // wait
 }
 

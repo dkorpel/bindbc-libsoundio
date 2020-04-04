@@ -2,6 +2,9 @@ module bindbc.libsoundio.types;
 
 extern(C):
 
+/**
+ * Either which version of Libsoundio was loaded, or an error code
+ */
 enum LibsoundioSupport {
     noLibrary,
     badLibrary,
@@ -11,276 +14,338 @@ enum LibsoundioSupport {
 }
 
 version(Libsoundio_20) {
+    /// the minimum libsoundio version expected at compile time
 	enum libsoundioSupport = LibsoundioSupport.libsoundio20;
 } else version(Libsoundio_11) {
+    /// the minimum libsoundio version expected at compile time
 	enum libsoundioSupport = LibsoundioSupport.libsoundio11;
 } else version(Libsoundio_10) {
+    /// the minimum libsoundio version expected at compile time
 	enum libsoundioSupport = LibsoundioSupport.libsoundio10;
 } else {
-	enum libsoundioSupport = LibsoundioSupport.noLibrary;
 	static assert(0, "Please specify a version of libsoundio to use. Options are:
 Libsoundio_20    version 2.0.x (added soundio_outstream_set_volume)
 Libsoundio_11    version 1.1.x (added soundio_version_ functions)
 Libsoundio_10    version 1.0.x (first release)
 
 You can specify it in your dub package file like so:
-dub.sdl:  `versions=\"Libsoundio_20\"`
+dub.sdl:  `versions \"Libsoundio_20\"`
 dub.json: `\"versions\": [\"Libsoundio_20\"]`
 
-Note that version 2.x and 1.x are incompatible because the outputStream struct 
-has an added volume field, if you specify the wrong major version your program 
-can error in unpredictable ways!
+Note that version 2.x and 1.x are incompatible because the `outputStream` struct
+has an added `volume` field. If you specify the wrong major version your program
+will error in unpredictable ways!
 
-For more info, look at readme.md");
+For more info, look at readme.md of bindbc-libsoundio");
 }
 
 /// See also ::soundio_strerror
 enum SoundIoError
 {
-    SoundIoErrorNone = 0,
+    /// No error happened
+    None = 0,
     /// Out of memory.
-    SoundIoErrorNoMem = 1,
+    NoMem = 1,
     /// The backend does not appear to be active or running.
-    SoundIoErrorInitAudioBackend = 2,
+    InitAudioBackend = 2,
     /// A system resource other than memory was not available.
-    SoundIoErrorSystemResources = 3,
+    SystemResources = 3,
     /// Attempted to open a device and failed.
-    SoundIoErrorOpeningDevice = 4,
-    SoundIoErrorNoSuchDevice = 5,
+    OpeningDevice = 4,
+    NoSuchDevice = 5,
     /// The programmer did not comply with the API.
-    SoundIoErrorInvalid = 6,
+    Invalid = 6,
     /// libsoundio was compiled without support for that backend.
-    SoundIoErrorBackendUnavailable = 7,
+    BackendUnavailable = 7,
     /// An open stream had an error that can only be recovered from by
     /// destroying the stream and creating it again.
-    SoundIoErrorStreaming = 8,
+    Streaming = 8,
     /// Attempted to use a device with parameters it cannot support.
-    SoundIoErrorIncompatibleDevice = 9,
+    IncompatibleDevice = 9,
     /// When JACK returns `JackNoSuchClient`
-    SoundIoErrorNoSuchClient = 10,
+    NoSuchClient = 10,
     /// Attempted to use parameters that the backend cannot support.
-    SoundIoErrorIncompatibleBackend = 11,
+    IncompatibleBackend = 11,
     /// Backend server shutdown or became inactive.
-    SoundIoErrorBackendDisconnected = 12,
-    SoundIoErrorInterrupted = 13,
+    BackendDisconnected = 12,
+    Interrupted = 13,
     /// Buffer underrun occurred.
-    SoundIoErrorUnderflow = 14,
+    Underflow = 14,
     /// Unable to convert to or from UTF-8 to the native string format.
-    SoundIoErrorEncodingString = 15
+    EncodingString = 15
 }
 
 /// Specifies where a channel is physically located.
 enum SoundIoChannelId
 {
-    SoundIoChannelIdInvalid = 0,
+    Invalid = 0,
 
-    SoundIoChannelIdFrontLeft = 1, ///< First of the more commonly supported ids.
-    SoundIoChannelIdFrontRight = 2,
-    SoundIoChannelIdFrontCenter = 3,
-    SoundIoChannelIdLfe = 4,
-    SoundIoChannelIdBackLeft = 5,
-    SoundIoChannelIdBackRight = 6,
-    SoundIoChannelIdFrontLeftCenter = 7,
-    SoundIoChannelIdFrontRightCenter = 8,
-    SoundIoChannelIdBackCenter = 9,
-    SoundIoChannelIdSideLeft = 10,
-    SoundIoChannelIdSideRight = 11,
-    SoundIoChannelIdTopCenter = 12,
-    SoundIoChannelIdTopFrontLeft = 13,
-    SoundIoChannelIdTopFrontCenter = 14,
-    SoundIoChannelIdTopFrontRight = 15,
-    SoundIoChannelIdTopBackLeft = 16,
-    SoundIoChannelIdTopBackCenter = 17,
-    SoundIoChannelIdTopBackRight = 18, ///< Last of the more commonly supported ids.
+    FrontLeft = 1, ///< First of the more commonly supported ids.
+    FrontRight = 2,
+    FrontCenter = 3,
+    Lfe = 4,
+    BackLeft = 5,
+    BackRight = 6,
+    FrontLeftCenter = 7,
+    FrontRightCenter = 8,
+    BackCenter = 9,
+    SideLeft = 10,
+    SideRight = 11,
+    TopCenter = 12,
+    TopFrontLeft = 13,
+    TopFrontCenter = 14,
+    TopFrontRight = 15,
+    TopBackLeft = 16,
+    TopBackCenter = 17,
+    TopBackRight = 18, ///< Last of the more commonly supported ids.
 
-    SoundIoChannelIdBackLeftCenter = 19, ///< First of the less commonly supported ids.
-    SoundIoChannelIdBackRightCenter = 20,
-    SoundIoChannelIdFrontLeftWide = 21,
-    SoundIoChannelIdFrontRightWide = 22,
-    SoundIoChannelIdFrontLeftHigh = 23,
-    SoundIoChannelIdFrontCenterHigh = 24,
-    SoundIoChannelIdFrontRightHigh = 25,
-    SoundIoChannelIdTopFrontLeftCenter = 26,
-    SoundIoChannelIdTopFrontRightCenter = 27,
-    SoundIoChannelIdTopSideLeft = 28,
-    SoundIoChannelIdTopSideRight = 29,
-    SoundIoChannelIdLeftLfe = 30,
-    SoundIoChannelIdRightLfe = 31,
-    SoundIoChannelIdLfe2 = 32,
-    SoundIoChannelIdBottomCenter = 33,
-    SoundIoChannelIdBottomLeftCenter = 34,
-    SoundIoChannelIdBottomRightCenter = 35,
+    BackLeftCenter = 19, ///< First of the less commonly supported ids.
+    BackRightCenter = 20,
+    FrontLeftWide = 21,
+    FrontRightWide = 22,
+    FrontLeftHigh = 23,
+    FrontCenterHigh = 24,
+    FrontRightHigh = 25,
+    TopFrontLeftCenter = 26,
+    TopFrontRightCenter = 27,
+    TopSideLeft = 28,
+    TopSideRight = 29,
+    LeftLfe = 30,
+    RightLfe = 31,
+    Lfe2 = 32,
+    BottomCenter = 33,
+    BottomLeftCenter = 34,
+    BottomRightCenter = 35,
 
     /// Mid/side recording
-    SoundIoChannelIdMsMid = 36,
-    SoundIoChannelIdMsSide = 37,
+    MsMid = 36,
+    MsSide = 37,
 
     /// first order ambisonic channels
-    SoundIoChannelIdAmbisonicW = 38,
-    SoundIoChannelIdAmbisonicX = 39,
-    SoundIoChannelIdAmbisonicY = 40,
-    SoundIoChannelIdAmbisonicZ = 41,
+    AmbisonicW = 38,
+    AmbisonicX = 39,
+    AmbisonicY = 40,
+    AmbisonicZ = 41,
 
     /// X-Y Recording
-    SoundIoChannelIdXyX = 42,
-    SoundIoChannelIdXyY = 43,
+    XyX = 42,
+    XyY = 43,
 
-    SoundIoChannelIdHeadphonesLeft = 44, ///< First of the "other" channel ids
-    SoundIoChannelIdHeadphonesRight = 45,
-    SoundIoChannelIdClickTrack = 46,
-    SoundIoChannelIdForeignLanguage = 47,
-    SoundIoChannelIdHearingImpaired = 48,
-    SoundIoChannelIdNarration = 49,
-    SoundIoChannelIdHaptic = 50,
-    SoundIoChannelIdDialogCentricMix = 51, ///< Last of the "other" channel ids
+    HeadphonesLeft = 44, ///< First of the "other" channel ids
+    HeadphonesRight = 45,
+    ClickTrack = 46,
+    ForeignLanguage = 47,
+    HearingImpaired = 48,
+    Narration = 49,
+    Haptic = 50,
+    DialogCentricMix = 51, ///< Last of the "other" channel ids
 
-    SoundIoChannelIdAux = 52,
-    SoundIoChannelIdAux0 = 53,
-    SoundIoChannelIdAux1 = 54,
-    SoundIoChannelIdAux2 = 55,
-    SoundIoChannelIdAux3 = 56,
-    SoundIoChannelIdAux4 = 57,
-    SoundIoChannelIdAux5 = 58,
-    SoundIoChannelIdAux6 = 59,
-    SoundIoChannelIdAux7 = 60,
-    SoundIoChannelIdAux8 = 61,
-    SoundIoChannelIdAux9 = 62,
-    SoundIoChannelIdAux10 = 63,
-    SoundIoChannelIdAux11 = 64,
-    SoundIoChannelIdAux12 = 65,
-    SoundIoChannelIdAux13 = 66,
-    SoundIoChannelIdAux14 = 67,
-    SoundIoChannelIdAux15 = 68
+    Aux = 52,
+    Aux0 = 53,
+    Aux1 = 54,
+    Aux2 = 55,
+    Aux3 = 56,
+    Aux4 = 57,
+    Aux5 = 58,
+    Aux6 = 59,
+    Aux7 = 60,
+    Aux8 = 61,
+    Aux9 = 62,
+    Aux10 = 63,
+    Aux11 = 64,
+    Aux12 = 65,
+    Aux13 = 66,
+    Aux14 = 67,
+    Aux15 = 68
 }
 
 /// Built-in channel layouts for convenience.
 enum SoundIoChannelLayoutId
 {
-    SoundIoChannelLayoutIdMono = 0,
-    SoundIoChannelLayoutIdStereo = 1,
-    SoundIoChannelLayoutId2Point1 = 2,
-    SoundIoChannelLayoutId3Point0 = 3,
-    SoundIoChannelLayoutId3Point0Back = 4,
-    SoundIoChannelLayoutId3Point1 = 5,
-    SoundIoChannelLayoutId4Point0 = 6,
-    SoundIoChannelLayoutIdQuad = 7,
-    SoundIoChannelLayoutIdQuadSide = 8,
-    SoundIoChannelLayoutId4Point1 = 9,
-    SoundIoChannelLayoutId5Point0Back = 10,
-    SoundIoChannelLayoutId5Point0Side = 11,
-    SoundIoChannelLayoutId5Point1 = 12,
-    SoundIoChannelLayoutId5Point1Back = 13,
-    SoundIoChannelLayoutId6Point0Side = 14,
-    SoundIoChannelLayoutId6Point0Front = 15,
-    SoundIoChannelLayoutIdHexagonal = 16,
-    SoundIoChannelLayoutId6Point1 = 17,
-    SoundIoChannelLayoutId6Point1Back = 18,
-    SoundIoChannelLayoutId6Point1Front = 19,
-    SoundIoChannelLayoutId7Point0 = 20,
-    SoundIoChannelLayoutId7Point0Front = 21,
-    SoundIoChannelLayoutId7Point1 = 22,
-    SoundIoChannelLayoutId7Point1Wide = 23,
-    SoundIoChannelLayoutId7Point1WideBack = 24,
-    SoundIoChannelLayoutIdOctagonal = 25
+    Mono = 0,
+    Stereo = 1,
+    _2Point1 = 2,
+    _3Point0 = 3,
+    _3Point0Back = 4,
+    _3Point1 = 5,
+    _4Point0 = 6,
+    Quad = 7,
+    QuadSide = 8,
+    _4Point1 = 9,
+    _5Point0Back = 10,
+    _5Point0Side = 11,
+    _5Point1 = 12,
+    _5Point1Back = 13,
+    _6Point0Side = 14,
+    _6Point0Front = 15,
+    _Hexagonal = 16,
+    _6Point1 = 17,
+    _6Point1Back = 18,
+    _6Point1Front = 19,
+    _7Point0 = 20,
+    _7Point0Front = 21,
+    _7Point1 = 22,
+    _7Point1Wide = 23,
+    _7Point1WideBack = 24,
+    Octagonal = 25
 }
 
 /// Identifies the audio backends that libsoundio supports
 enum SoundIoBackend
 {
-    SoundIoBackendNone = 0,
-    SoundIoBackendJack = 1,
-    SoundIoBackendPulseAudio = 2,
-    SoundIoBackendAlsa = 3,
-    SoundIoBackendCoreAudio = 4,
-    SoundIoBackendWasapi = 5,
-    SoundIoBackendDummy = 6
+    none = 0,
+    jack = 1,
+    pulseAudio = 2,
+    alsa = 3,
+    coreAudio = 4,
+    wasapi = 5,
+    dummy = 6
 }
 
 /// Specifies whether an IoDevice is aimed at audio capture or audio playback
 enum SoundIoDeviceAim
 {
-    SoundIoDeviceAimInput = 0, ///< capture / recording
-    SoundIoDeviceAimOutput = 1 ///< playback
+    input = 0, ///< capture / recording
+    output = 1 ///< playback
 }
 
 /// For your convenience, Native Endian and Foreign Endian constants are defined
 /// which point to the respective SoundIoFormat values.
 enum SoundIoFormat
 {
-    SoundIoFormatInvalid = 0,
-    SoundIoFormatS8 = 1, ///< Signed 8 bit
-    SoundIoFormatU8 = 2, ///< Unsigned 8 bit
-    SoundIoFormatS16LE = 3, ///< Signed 16 bit Little Endian
-    SoundIoFormatS16BE = 4, ///< Signed 16 bit Big Endian
-    SoundIoFormatU16LE = 5, ///< Unsigned 16 bit Little Endian
-    SoundIoFormatU16BE = 6, ///< Unsigned 16 bit Big Endian
-    SoundIoFormatS24LE = 7, ///< Signed 24 bit Little Endian using low three bytes in 32-bit word
-    SoundIoFormatS24BE = 8, ///< Signed 24 bit Big Endian using low three bytes in 32-bit word
-    SoundIoFormatU24LE = 9, ///< Unsigned 24 bit Little Endian using low three bytes in 32-bit word
-    SoundIoFormatU24BE = 10, ///< Unsigned 24 bit Big Endian using low three bytes in 32-bit word
-    SoundIoFormatS32LE = 11, ///< Signed 32 bit Little Endian
-    SoundIoFormatS32BE = 12, ///< Signed 32 bit Big Endian
-    SoundIoFormatU32LE = 13, ///< Unsigned 32 bit Little Endian
-    SoundIoFormatU32BE = 14, ///< Unsigned 32 bit Big Endian
-    SoundIoFormatFloat32LE = 15, ///< Float 32 bit Little Endian, Range -1.0 to 1.0
-    SoundIoFormatFloat32BE = 16, ///< Float 32 bit Big Endian, Range -1.0 to 1.0
-    SoundIoFormatFloat64LE = 17, ///< Float 64 bit Little Endian, Range -1.0 to 1.0
-    SoundIoFormatFloat64BE = 18 ///< Float 64 bit Big Endian, Range -1.0 to 1.0
+    invalid = 0,
+    s8 = 1, /// Signed 8 bit
+    u8 = 2, /// Unsigned 8 bit
+    s16LE = 3, /// Signed 16 bit Little Endian
+    s16BE = 4, /// Signed 16 bit Big Endian
+    u16LE = 5, /// Unsigned 16 bit Little Endian
+    u16BE = 6, /// Unsigned 16 bit Big Endian
+    s24LE = 7, /// Signed 24 bit Little Endian using low three bytes in 32-bit word
+    s24BE = 8, /// Signed 24 bit Big Endian using low three bytes in 32-bit word
+    u24LE = 9, /// Unsigned 24 bit Little Endian using low three bytes in 32-bit word
+    u24BE = 10, /// Unsigned 24 bit Big Endian using low three bytes in 32-bit word
+    s32LE = 11, /// Signed 32 bit Little Endian
+    s32BE = 12, /// Signed 32 bit Big Endian
+    u32LE = 13, /// Unsigned 32 bit Little Endian
+    u32BE = 14, /// Unsigned 32 bit Big Endian
+    float32LE = 15, ///< Float 32 bit Little Endian, Range -1.0 to 1.0
+    float32BE = 16, ///< Float 32 bit Big Endian, Range -1.0 to 1.0
+    float64LE = 17, ///< Float 64 bit Little Endian, Range -1.0 to 1.0
+    float64BE = 18 ///< Float 64 bit Big Endian, Range -1.0 to 1.0
 }
 
-enum SoundIoFormatS16NE = SoundIoFormat.SoundIoFormatS16LE;
-enum SoundIoFormatU16NE = SoundIoFormat.SoundIoFormatU16LE;
-enum SoundIoFormatS24NE = SoundIoFormat.SoundIoFormatS24LE;
-enum SoundIoFormatU24NE = SoundIoFormat.SoundIoFormatU24LE;
-enum SoundIoFormatS32NE = SoundIoFormat.SoundIoFormatS32LE;
-enum SoundIoFormatU32NE = SoundIoFormat.SoundIoFormatU32LE;
-enum SoundIoFormatFloat32NE = SoundIoFormat.SoundIoFormatFloat32LE;
-enum SoundIoFormatFloat64NE = SoundIoFormat.SoundIoFormatFloat64LE;
+version(LittleEndian) {
+    /// Native-endian sound format
+    /// See_Also: [SoundIoFormat]
+    enum SoundIoFormatNE {
+        s16 = SoundIoFormat.s16LE,
+        u16 = SoundIoFormat.u16LE,
+        s24 = SoundIoFormat.s24LE,
+        u24 = SoundIoFormat.u24LE,
+        s32 = SoundIoFormat.s32LE,
+        u32 = SoundIoFormat.u32LE,
+        float32 = SoundIoFormat.float32LE,
+        float64 = SoundIoFormat.float64LE,
+    }
 
-enum SoundIoFormatS16FE = SoundIoFormat.SoundIoFormatS16BE;
-enum SoundIoFormatU16FE = SoundIoFormat.SoundIoFormatU16BE;
-enum SoundIoFormatS24FE = SoundIoFormat.SoundIoFormatS24BE;
-enum SoundIoFormatU24FE = SoundIoFormat.SoundIoFormatU24BE;
-enum SoundIoFormatS32FE = SoundIoFormat.SoundIoFormatS32BE;
-enum SoundIoFormatU32FE = SoundIoFormat.SoundIoFormatU32BE;
-enum SoundIoFormatFloat32FE = SoundIoFormat.SoundIoFormatFloat32BE;
-enum SoundIoFormatFloat64FE = SoundIoFormat.SoundIoFormatFloat64BE;
+    /// Foreign-endian sound format.
+    /// See_Also: [SoundIoFormat]
+    enum SoundIoFormatFE {
+        s16 = SoundIoFormat.s16BE,
+        u16 = SoundIoFormat.u16BE,
+        s24 = SoundIoFormat.s24BE,
+        u24 = SoundIoFormat.u24BE,
+        s32 = SoundIoFormat.s32BE,
+        u32 = SoundIoFormat.u32BE,
+        float32 = SoundIoFormat.float32BE,
+        float64 = SoundIoFormat.float64BE,
+    }
+} else {
+    /// Native-endian sound format
+    /// See_Also: [SoundIoFormat]
+    enum SoundIoFormatNE {
+        s16 = SoundIoFormat.s16BE,
+        u16 = SoundIoFormat.u16BE,
+        s24 = SoundIoFormat.s24BE,
+        u24 = SoundIoFormat.u24BE,
+        s32 = SoundIoFormat.s32BE,
+        u32 = SoundIoFormat.u32BE,
+        float32 = SoundIoFormat.float32BE,
+        float64 = SoundIoFormat.float64BE,
+    }
 
+    /// Foreign-endian sound format.
+    /// See_Also: [SoundIoFormat]
+    enum SoundIoFormatFE {
+        s16 = SoundIoFormat.s16LE,
+        u16 = SoundIoFormat.u16LE,
+        s24 = SoundIoFormat.s24LE,
+        u24 = SoundIoFormat.u24LE,
+        s32 = SoundIoFormat.s32LE,
+        u32 = SoundIoFormat.u32LE,
+        float32 = SoundIoFormat.float32LE,
+        float64 = SoundIoFormat.float64LE,
+    }
+}
+
+/// The maximum amount of channels (such as left and right) that the library supports
 enum SOUNDIO_MAX_CHANNELS = 24;
 
+/// Species a channel layout
+///
+/// Commonly this is simply two channels: left ear and right ear, but more
+/// complex stereo sound setups can also be described here.
+///
 /// The size of this struct is OK to use.
 struct SoundIoChannelLayout
 {
+    /// name of the channel zero-terminated string
     const(char)* name;
+
+    /// amount of channels
     int channel_count;
+
+    /// array specifying the physical location each channel represents
     SoundIoChannelId[SOUNDIO_MAX_CHANNELS] channels;
 }
 
+/// Specifies a minimum and maximum supported sample rate
+///
 /// The size of this struct is OK to use.
 struct SoundIoSampleRateRange
 {
+    /// minimum sample rate
     int min;
+
+    /// maximum sample rate
     int max;
 }
 
+/// ??
+///
 /// The size of this struct is OK to use.
 struct SoundIoChannelArea
 {
     /// Base address of buffer.
     char* ptr;
+
     /// How many bytes it takes to get from the beginning of one sample to
     /// the beginning of the next sample.
     int step;
 }
 
+/// ??
+///
 /// The size of this struct is not part of the API or ABI.
 struct SoundIo
 {
     /// Optional. Put whatever you want here. Defaults to NULL.
     void* userdata;
+
     /// Optional callback. Called when the list of devices change. Only called
     /// during a call to ::soundio_flush_events or ::soundio_wait_events.
-    void function (SoundIo*) on_devices_change;
+    void function(SoundIo*) on_devices_change;
+
     /// Optional callback. Called when the backend disconnects. For example,
     /// when the JACK server shuts down. When this happens, listing devices
     /// and opening streams will always fail with
@@ -297,11 +362,12 @@ struct SoundIo
     /// * #SoundIoErrorSystemResources
     /// * #SoundIoErrorOpeningDevice - unexpected problem accessing device
     ///   information
-    void function (SoundIo*, int err) on_backend_disconnect;
+    void function(SoundIo*, int err) on_backend_disconnect;
+
     /// Optional callback. Called from an unknown thread that you should not use
     /// to call any soundio functions. You may use this to signal a condition
     /// variable to wake up. Called when ::soundio_wait_events would be woken up.
-    void function (SoundIo*) on_events_signal;
+    void function(SoundIo*) on_events_signal;
 
     /// Read-only. After calling ::soundio_connect or ::soundio_connect_backend,
     /// this field tells which backend is currently connected.

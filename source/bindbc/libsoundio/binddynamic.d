@@ -212,7 +212,7 @@ LibsoundioSupport loadLibsoundio()
 			"/usr/local/lib/libsoundio.so.2.0.0",
 			];
 		} else {
-			const(char)[][6] libNames = [
+			const(char)[][14] libNames = [
 			"libsoundio.so",
 			"/usr/local/lib/libsoundio.so",
 			"libsoundio.so.1",
