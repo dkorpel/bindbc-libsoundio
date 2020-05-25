@@ -212,7 +212,7 @@ void unloadLibsoundio() {
  */
 LibsoundioSupport loadLibsoundio() {
 	version(Windows) {
-		const(char)[][1] libNames = ["libsoundio.dll"];
+		const(char)[][2] libNames = ["soundio.dll", "libsoundio.dll"];
 	} else version(OSX) {
 		const(char)[][1] libNames = ["libsoundio.dylib"]; //todo: verify this
 	} else version(Posix) {
@@ -249,7 +249,9 @@ LibsoundioSupport loadLibsoundio() {
 	LibsoundioSupport ret;
     foreach(name; libNames) {
         ret = loadLibsoundio(name.ptr);
-        if(ret != LibsoundioSupport.noLibrary) break;
+        if (ret != LibsoundioSupport.noLibrary) {
+			break;
+		}
     }
 	return ret;
 }
@@ -262,7 +264,7 @@ LibsoundioSupport loadLibsoundio() {
  */
 LibsoundioSupport loadLibsoundio(const(char)* libName) {
 	lib = load(libName);
-	if(lib == invalidHandle) {
+	if (lib == invalidHandle) {
 		return LibsoundioSupport.noLibrary;
 	}
 
